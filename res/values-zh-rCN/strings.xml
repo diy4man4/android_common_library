@@ -1,0 +1,10 @@
+<resources>
+    <string name="unable_touch_file">文件不可触及: </string>
+    <string name="file_open_failed ">文件打开失败.</string>
+    <string name="no_supported_file_explorer">没有合适的浏览器可打开此文件.</string>
+    <string name="sdcard_not_available">SD卡不能用</string>
+    <string name="loading">加载中...</string>
+    <string name="empty_content">暂无记录</string>
+    <string name="network_disconnected">网络未连接!</string>
+
+</resources>

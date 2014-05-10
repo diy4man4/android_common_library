@@ -1,0 +1,11 @@
+<resources>
+    <string name="unable_touch_file">Unable to touch file: </string>
+    <string name="file_open_failed ">File open failed.</string>
+    <string name="no_supported_file_explorer">No supported explorer to open it.</string>
+    <string name="sdcard_not_available">No SDCard available</string>
+    <string name="loading">Loading...</string>
+    <string name="empty_content">No data currently</string>
+    
+    <string name="network_disconnected">Network Disconnected!</string>
+
+</resources>
