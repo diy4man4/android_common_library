@@ -24,6 +24,11 @@ public class NetworkStatus {
 		return null;
 	}
 	
+	/**
+	 * Check whether network is connected currently.
+	 * @param context application context
+	 * @return return true if network is connected, otherwise return false.
+	 */
 	public static boolean isNetworkConnected(Context context){
 		if (context != null) {
 			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -35,6 +40,11 @@ public class NetworkStatus {
 		return false;
 	}
 
+	/**
+	 * Check whether WIFI network is connected currently.
+	 * @param context application context
+	 * @return return true if WIFI network is connected, otherwise return false.
+	 */
 	public static boolean isWifiConnected(Context context) {
 		if (context != null) {
 			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -46,6 +56,11 @@ public class NetworkStatus {
 		return false;
 	}
 
+	/**
+	 * Check whether mobile network is connected currently.
+	 * @param context application context
+	 * @return return true if mobile network is connected, otherwise return false.
+	 */
 	public static boolean isMobileConnected(Context context) {
 		if (context != null) {
 			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -57,17 +72,28 @@ public class NetworkStatus {
 		return false;
 	}
 
+	 /**
+     * Reports the type of network to which the
+     * info in this {@code NetworkInfo} pertains.
+     * @return one of {@link ConnectivityManager#TYPE_MOBILE}, {@link
+     * ConnectivityManager#TYPE_WIFI}, {@link ConnectivityManager#TYPE_WIMAX}, {@link
+     * ConnectivityManager#TYPE_ETHERNET},  {@link ConnectivityManager#TYPE_BLUETOOTH}, or other
+     * types defined by {@link ConnectivityManager}
+     */
 	public static int getConnectedType(Context context) {
-		if (context != null) {
-			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-			NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-			if (mNetworkInfo != null && mNetworkInfo.isAvailable()) {
-				return mNetworkInfo.getType();
-			}
+		ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+		if (mNetworkInfo != null && mNetworkInfo.isAvailable()) {
+			return mNetworkInfo.getType();
 		}
-		return -1;
+		throw new RuntimeException("No network is connected currently...");
 	}
 
+	/**
+	 * Get APN type connected currently.
+	 * @param context
+	 * @return the type can be {@link CMNET}}, {@link CMWAP} and {@link WIFI}
+	 */
 	public static int getAPNType(Context context) {
 		int netType = -1;
 		ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -88,6 +114,11 @@ public class NetworkStatus {
 		return netType;
 	}
 	
+	/**
+	 * Get currently WIFI info, if not connected will return null instread.
+	 * @param context
+	 * @return WIFI info or null.
+	 */
 	public static WifiInfo getWifiInfo(Context context){
 		WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
 		int wifiState = wifiManager.getWifiState();
