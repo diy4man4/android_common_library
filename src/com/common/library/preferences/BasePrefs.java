@@ -8,9 +8,11 @@ import android.text.TextUtils;
 
 import com.common.library.preferences.PrefsUnity;
 
-public abstract class BasePrefs {
+public class BasePrefs {
     private static final String KEY_NAMESPACE = "namespace";
 	protected Context mContext;
+	protected PrefsConfig mPrefsConfig;
+	private static BasePrefs instance;
 
 	protected final ConcurrentHashMap<String, String> STRING_PREFS = new ConcurrentHashMap<String, String>();
 	protected final ConcurrentHashMap<String, Integer> INTEGER_PREFS = new ConcurrentHashMap<String, Integer>();
@@ -18,22 +20,47 @@ public abstract class BasePrefs {
 	protected final ConcurrentHashMap<String, Long> LONG_PREFS = new ConcurrentHashMap<String, Long>();
 	protected final ConcurrentHashMap<String, Float> FLOAT_PREFS = new ConcurrentHashMap<String, Float>();
 
-	public BasePrefs(Context context) {
+	protected BasePrefs(Context context) {
 		mContext = context;
 	}
+	
+	private static synchronized void initBasePrefs(Context context, PrefsConfig prefsConfig){
+		instance = new BasePrefs(context);
+		instance.setPrefsConfig(prefsConfig);
+	}
+	
+	protected static BasePrefs getPrefs(Context context, PrefsConfig prefsConfig){
+		if(instance == null){
+			initBasePrefs(context, prefsConfig);
+		}
+		return instance;
+	}
 
-	protected abstract String getModuleName();
-
+	public abstract static class PrefsConfig{
+		protected abstract String getModuleName();
+	}
+	
+	private void setPrefsConfig(PrefsConfig config){
+		mPrefsConfig = config;
+	}
+	
 	public Context getContext() {
 		return mContext;
 	}
 	
+	private void checkPrefsConfig(){
+		if(mPrefsConfig == null){
+			throw new RuntimeException("PrefsConfig has not been initialized.");
+		}
+	}
+	
 	protected String getPrefsFileName() {
+		checkPrefsConfig();
 		String namespace = getNamespace();
 		if(TextUtils.isEmpty(namespace)){
 			throw new RuntimeException("No namespace is available.");
 		}else{
-			return namespace + "_" + getModuleName();
+			return namespace + "_" + mPrefsConfig.getModuleName();
 		}
 	}
 	
@@ -346,7 +373,8 @@ public abstract class BasePrefs {
 	 * @param accountName
 	 */
 	public void clearAll(String namespace, String accountName){
-		PrefsUnity.removeAll(mContext, namespace + "_" + getModuleName());
+		checkPrefsConfig();
+		PrefsUnity.removeAll(mContext, namespace + "_" + mPrefsConfig.getModuleName());
 		removeGlobalAll();
 	}
 

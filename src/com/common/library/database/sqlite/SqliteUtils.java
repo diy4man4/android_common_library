@@ -19,21 +19,20 @@ import com.common.library.database.TableMapping;
  * <p>You can do like below:</p>
  * 
  * <pre>
- * public class ReportDbUtils extends SqliteUtils{
- *	private static ReportDbHelper mDbHelper;
- *	protected ReportDbUtils(Context context) {
- *		super(mDbHelper);
- *	}
- *		
- *	// Every module database utils must have this method
- *	public static SqliteUtils getDbUtils(Context context){
- *		return getDbUtils(mDbHelper = new ReportDbHelper(context));
- *	}
- *}</pre>
- * 
- * @author zhangfei
- *
- */
+ *public class ReportDbUtils extends SqliteUtils{
+ *	public static final String DATABASE_NAME = "breakdown_report.db";
+ *	public static final int DATABASE_VERSION = 1;
+*	private static ReportDbHelper mDbHelper;
+*
+*	public ReportDbUtils(Context context) {
+*		super(mDbHelper);
+*	}
+*
+*	public static SqliteUtils getDbUtils(Context context){
+*		 return getDbUtils(mDbHelper == null ? mDbHelper = new ReportDbHelper(context) : mDbHelper);
+*	}
+*}</pre>
+*/
 public class SqliteUtils {
 	private static SqliteUtils mSingleton;
 	protected SQLiteDatabase mDatabase;
