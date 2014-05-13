@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 
@@ -304,7 +305,8 @@ public abstract class ThreadWork<Params, Progress, Result> {
         return executeInternal(SERIAL_EXECUTOR, true, params);
     }
 
-    private final ThreadWork<Params, Progress, Result> executeInternal(Executor executor, boolean cancelPrevious, Params... params) {
+    private final ThreadWork<Params, Progress, Result> executeInternal(Executor executor,
+    		boolean cancelPrevious, Params... params) {
         if (cancelPrevious) {
             if (mTracker == null) {
                 throw new IllegalStateException();
@@ -312,7 +314,11 @@ public abstract class ThreadWork<Params, Progress, Result> {
                 mTracker.cancelOthers(this);
             }
         }
-        mInnerTask.executeOnExecutor(executor, params);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        	mInnerTask.executeOnExecutor(executor, params);
+        }else{
+        	mInnerTask.execute(params);
+        }
         return this;
     }
 
