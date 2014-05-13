@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package com.common.library.thread;
-
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -36,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-
 
 /**
  * Modeled after {@link AsyncTask}; the basic usage is the same, with extra features:
@@ -99,7 +95,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
             }
         }
 
-
         protected synchronized void scheduleNext() {
             if ((mActive = mTasks.poll()) != null) {
             	PARALLEL_EXECUTOR.execute(mActive);
@@ -122,13 +117,11 @@ public abstract class ThreadWork<Params, Progress, Result> {
             }
         }
 
-
         private void remove(ThreadWork<?, ?, ?> task) {
             synchronized (mTasks) {
                 mTasks.remove(task);
             }
         }
-
 
         /**
          * Cancel all registered tasks.
@@ -141,7 +134,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
                 mTasks.clear();
             }
         }
-
 
         /**
          * Cancel all instances of the same class as {@code current} other than
@@ -163,35 +155,28 @@ public abstract class ThreadWork<Params, Progress, Result> {
             }
         }
 
-
         public int getTaskCount() {
             return mTasks.size();
         }
-
 
         public boolean containsTask(ThreadWork<?, ?, ?> task) {
             return mTasks.contains(task);
         }
     }
 
-
     private final Tracker mTracker;
-
 
     private static class InnerTask<Params2, Progress2, Result2> extends AsyncTask<Params2, Progress2, Result2> {
         private final ThreadWork<Params2, Progress2, Result2> mOwner;
-
 
         public InnerTask(ThreadWork<Params2, Progress2, Result2> owner) {
             mOwner = owner;
         }
 
-
         @Override
         protected Result2 doInBackground(Params2... params) {
             return mOwner.doInBackground(params);
         }
-
 
         @Override
         protected void onProgressUpdate(Progress2... values) {
@@ -215,10 +200,8 @@ public abstract class ThreadWork<Params, Progress, Result> {
         }
     }
 
-
     private final InnerTask<Params, Progress, Result> mInnerTask;
     private volatile boolean mCancelled;
-
 
 	/**
 	 * Construction with what create new instances can be canceled by Tracker.
@@ -249,19 +232,14 @@ public abstract class ThreadWork<Params, Progress, Result> {
         }
     }
 
-
     /** @see AsyncTask#doInBackground */
     protected abstract Result doInBackground(Params... params);
-
-
-
 
     /** @see AsyncTask#cancel(boolean) */
     public final void cancel(boolean mayInterruptIfRunning) {
         mCancelled = true;
         mInnerTask.cancel(mayInterruptIfRunning);
     }
-
 
     /** @see AsyncTask#onCancelled */
     protected void onCancelled() {}
@@ -276,7 +254,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
         }
     }
 
-
     /**
      * Similar to {@link AsyncTask#onPostExecute}, but this will never be executed if
      * {@link #cancel(boolean)} has been called before its execution, even if
@@ -286,7 +263,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
      */
     protected void onPostExecute(Result result) {}
 
-
     /**
      * execute on {@link #PARALLEL_EXECUTOR}
      *
@@ -295,7 +271,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
     public final ThreadWork<Params, Progress, Result> executeParallel(Params... params) {
         return executeInternal(PARALLEL_EXECUTOR, false, params);
     }
-
 
     /**
      * execute on {@link #SERIAL_EXECUTOR}
@@ -313,7 +288,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
     	return executeSerial(params);
     }
 
-
     /**
      * Cancel all previously created instances of the same class tracked by the same
      * {@link Tracker}, and then {@link #executeParallel}.
@@ -322,7 +296,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
         return executeInternal(PARALLEL_EXECUTOR, true, params);
     }
 
-
     /**
      * Cancel all previously created instances of the same class tracked by the same
      * {@link Tracker}, and then {@link #executeSerial}.
@@ -330,7 +303,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
     public final ThreadWork<Params, Progress, Result> cancelPreviousAndExecuteSerial(Params... params) {
         return executeInternal(SERIAL_EXECUTOR, true, params);
     }
-
 
     private final ThreadWork<Params, Progress, Result> executeInternal(Executor executor, boolean cancelPrevious, Params... params) {
         if (cancelPrevious) {
@@ -344,7 +316,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
         return this;
     }
 
-
     /**
      * Runs a {@link Runnable} in a bg thread, using {@link #PARALLEL_EXECUTOR}.
      */
@@ -352,14 +323,12 @@ public abstract class ThreadWork<Params, Progress, Result> {
         return runAsyncInternal(PARALLEL_EXECUTOR, runnable);
     }
 
-
     /**
      * Runs a {@link Runnable} in a bg thread, using {@link #SERIAL_EXECUTOR}.
      */
     public static ThreadWork<Void, Void, Void> runAsyncSerial(Runnable runnable) {
         return runAsyncInternal(SERIAL_EXECUTOR, runnable);
     }
-
 
     private static ThreadWork<Void, Void, Void> runAsyncInternal(Executor executor,	final Runnable runnable) {
         ThreadWork<Void, Void, Void> task = new ThreadWork<Void, Void, Void>() {
@@ -372,7 +341,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
         };
         return task.executeInternal(executor, false, (Void[]) null);
     }
-
 
     /**
      * Run {@code} on a worker thread, return execution result.
@@ -408,7 +376,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
     private static class AsyncTaskResult<Data> {
 		final ThreadWork mTask;
         final Data[] mData;
-
 
         AsyncTaskResult(ThreadWork task, Data... data) {
             mTask = task;

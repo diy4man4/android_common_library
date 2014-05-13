@@ -8,11 +8,37 @@ import android.text.TextUtils;
 
 import com.common.library.preferences.PrefsUnity;
 
-public class BasePrefs {
+/**
+ * Preferences in every model should extends BasePrefs, you can do like below:<br>
+ * <pre>
+ * public class DefaultPrefs extends BasePrefs{
+ *	private static DefaultPrefs singleton;
+ *
+ *	protected DefaultPrefs(Context context) {
+ *		super(context);
+ *	}
+ *
+ *	@Override
+ *	protected String getModuleName() {
+ *		return "default_prefs";
+ *	}
+ *	
+ *	private static synchronized void initPrefs(Context context){
+ *		singleton = new DefaultPrefs(context);
+ *	}
+ *	
+ *	public  synchronized  static DefaultPrefs getPrefs(Context context){
+ *		if(singleton == null){
+ *			initPrefs(context);
+ *		}
+ *		return singleton;
+ *	}
+ *}
+* </pre>
+*/
+public abstract class BasePrefs {
     private static final String KEY_NAMESPACE = "namespace";
 	protected Context mContext;
-	protected PrefsConfig mPrefsConfig;
-	private static BasePrefs instance;
 
 	protected final ConcurrentHashMap<String, String> STRING_PREFS = new ConcurrentHashMap<String, String>();
 	protected final ConcurrentHashMap<String, Integer> INTEGER_PREFS = new ConcurrentHashMap<String, Integer>();
@@ -20,47 +46,22 @@ public class BasePrefs {
 	protected final ConcurrentHashMap<String, Long> LONG_PREFS = new ConcurrentHashMap<String, Long>();
 	protected final ConcurrentHashMap<String, Float> FLOAT_PREFS = new ConcurrentHashMap<String, Float>();
 
+	protected abstract String getModuleName();
+	
 	protected BasePrefs(Context context) {
 		mContext = context;
-	}
-	
-	private static synchronized void initBasePrefs(Context context, PrefsConfig prefsConfig){
-		instance = new BasePrefs(context);
-		instance.setPrefsConfig(prefsConfig);
-	}
-	
-	protected static BasePrefs getPrefs(Context context, PrefsConfig prefsConfig){
-		if(instance == null){
-			initBasePrefs(context, prefsConfig);
-		}
-		return instance;
-	}
-
-	public abstract static class PrefsConfig{
-		protected abstract String getModuleName();
-	}
-	
-	private void setPrefsConfig(PrefsConfig config){
-		mPrefsConfig = config;
 	}
 	
 	public Context getContext() {
 		return mContext;
 	}
 	
-	private void checkPrefsConfig(){
-		if(mPrefsConfig == null){
-			throw new RuntimeException("PrefsConfig has not been initialized.");
-		}
-	}
-	
 	protected String getPrefsFileName() {
-		checkPrefsConfig();
 		String namespace = getNamespace();
 		if(TextUtils.isEmpty(namespace)){
 			throw new RuntimeException("No namespace is available.");
 		}else{
-			return namespace + "_" + mPrefsConfig.getModuleName();
+			return namespace + "_" + getModuleName();
 		}
 	}
 	
@@ -373,8 +374,7 @@ public class BasePrefs {
 	 * @param accountName
 	 */
 	public void clearAll(String namespace, String accountName){
-		checkPrefsConfig();
-		PrefsUnity.removeAll(mContext, namespace + "_" + mPrefsConfig.getModuleName());
+		PrefsUnity.removeAll(mContext, namespace + "_" + getModuleName());
 		removeGlobalAll();
 	}
 
