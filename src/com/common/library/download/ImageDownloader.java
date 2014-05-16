@@ -7,7 +7,7 @@ import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.widget.ImageView;
 
-import com.common.library.thread.ThreadWork;
+import com.common.library.utils.ThreadWork;
 
 public class ImageDownloader {
 	private static final String TAG = ImageDownloader.class.getSimpleName();

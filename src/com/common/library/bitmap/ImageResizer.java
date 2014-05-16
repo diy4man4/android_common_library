@@ -408,7 +408,7 @@ public class ImageResizer extends ImageWorker {
     	ByteArrayOutputStream outputStream = null;
     	try{
     		outputStream = new ByteArrayOutputStream();
-    		bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+    		bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
     		
     		int options = 100;
     		while (outputStream.toByteArray().length / 1024 > maxSize) {

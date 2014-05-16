@@ -38,7 +38,55 @@ import com.common.library.BuildConfig;
 import com.common.library.R;
 
 /**
- * A simple subclass of {@link ImageResizer} that fetches and resizes images fetched from a URL.
+ * A simple subclass of {@link ImageResizer} that fetches and resizes images
+ * fetched from a URL.<br>
+ * 
+ * You can use it like below:
+ * 
+ * <pre>
+ * public class ImageFetcherActivity extends Activity {
+ * 	protected ImageHttpFetcher mImageFetcher;
+ * 	protected int mPhotoSize;
+ * 
+ * 	&#064;Override
+ * 	protected void onCreate(Bundle savedInstanceState) {
+ * 		super.onCreate(savedInstanceState);
+ * 		// ...
+ * 
+ * 		mPhotoSize = getResources().getDimensionPixelSize(R.dimen.icon_size);
+ * 		mImageFetcher = new ImageHttpFetcher(getApplicationContext(),
+ * 				mPhotoSize);
+ * 		mImageFetcher.setLoadingImage(R.drawable.ic_report_default);
+ * 		mImageFetcher
+ * 				.addImageCache(getSupportFragmentManager(),
+ * 						new ImageCacheParams(this,
+ * 								ReportConfigManager.PHOTO_CACHE_DIR));
+ * 	}
+ * 
+ * 	&#064;Override
+ * 	protected void onResume() {
+ * 		super.onResume();
+ * 		mImageFetcher.onActivityResume();
+ * 	}
+ * 
+ * 	&#064;Override
+ * 	protected void onPause() {
+ * 		super.onPause();
+ * 		mImageFetcher.onActivityPause();
+ * 	}
+ * 
+ * 	&#064;Override
+ * 	protected void onDestroy() {
+ * 		super.onDestroy();
+ * 		mImageFetcher.onActivityDestroy();
+ * 	}
+ * 
+ * 	private void function() {
+ * 		// load image by passing download url and image object
+ * 		mImageFetcher.loadImage(imageUrl, mViewHolder.mReportIcon);
+ * 	}
+ * }
+ * </pre>
  */
 public class ImageHttpFetcher extends ImageResizer {
     private static final String TAG = "ImageFetcher";
@@ -221,8 +269,7 @@ public class ImageHttpFetcher extends ImageResizer {
                         snapshot = mHttpDiskCache.get(key);
                     }
                     if (snapshot != null) {
-                        fileInputStream =
-                                (FileInputStream) snapshot.getInputStream(DISK_CACHE_INDEX);
+                        fileInputStream = (FileInputStream) snapshot.getInputStream(DISK_CACHE_INDEX);
                         fileDescriptor = fileInputStream.getFD();
                     }
                 } catch (IOException e) {

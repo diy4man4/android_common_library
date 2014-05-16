@@ -13,67 +13,55 @@ import com.common.library.database.BatchSelection;
 import com.common.library.database.TableMapping;
 
 /**
- * A convenient utils class to help do CRUD on sqlite database, 
- * every module in project should have a subclass of this class.
+ * A convenient utils class to help do CRUD on sqlite database, every module in project should have a subclass of this class.
  * 
- * <p>You can do like below:</p>
+ * <p>
+ * You can do like below:
+ * </p>
  * 
  * <pre>
- *public class ReportDbUtils extends SqliteUtils{
- *	public static final String DATABASE_NAME = "breakdown_report.db";
- *	public static final int DATABASE_VERSION = 1;
-*	private static ReportDbHelper mDbHelper;
-*
-*	public ReportDbUtils(Context context) {
-*		super(mDbHelper);
-*	}
-*
-*	public static SqliteUtils getDbUtils(Context context){
-*		 return getDbUtils(mDbHelper == null ? mDbHelper = new ReportDbHelper(context) : mDbHelper);
-*	}
-*}</pre>
-*/
-public class SqliteUtils {
-	private static SqliteUtils mSingleton;
+ * public class ReportDbUtils extends SqliteUtils {
+ * 	public static final String DATABASE_NAME = &quot;breakdown_report.db&quot;;
+ * 	public static final int DATABASE_VERSION = 1;
+ * 	private static ReportDbUtils singleton;
+ * 
+ * 	private synchronized static void initDbUtils() {
+ * 		singleton = new ReportDbUtils();
+ * 	}
+ * 
+ * 	public synchronized static SqliteUtils getDbUtils(Context context) {
+ * 		if (singleton == null) {
+ * 			initDbUtils();
+ * 		}
+ * 		return singleton;
+ * 	}
+ * 
+ * 	&#064;Override
+ * 	protected BaseDBHelper getDbHelper(Context context) {
+ * 		return new ReportDbHelper(context);
+ * 	}
+ * }
+ * 
+ * </pre>
+ */
+public abstract class SqliteUtils {
 	protected SQLiteDatabase mDatabase;
-	protected BaseDBHelper mDbHelper;
 	private volatile boolean mTransactionLocked = false;
 	
-	/**
-	 * Construct which should be override by subclass.
-	 * @param dbHelper
-	 */
-	protected SqliteUtils(BaseDBHelper dbHelper){
-		mDbHelper = dbHelper;
-		if(mDbHelper == null){
-			throw new RuntimeException("dbHelper cannot be null");
-		}
-		mDatabase = mDbHelper.getWritableDatabase();
-	}
+	protected abstract BaseDBHelper getDbHelper(Context context);
 	
-	private synchronized static void initDbUtils(BaseDBHelper dbHelper){
-		mSingleton = new SqliteUtils(dbHelper);
-	}
-	
-	/**
-	 * Subclass should have a method like below:<br>
-	 * protected static SqliteUtils getDbUtils(Context context);
-	 * @param dbHelper
-	 * @return
-	 */
-	protected static SqliteUtils getDbUtils(BaseDBHelper dbHelper){
-		if(mSingleton == null){
-			initDbUtils(dbHelper);
-		}
-		return mSingleton;
-	}
-	
-	public Context getContext(){
-		return mDbHelper.getContext();
+	protected SqliteUtils(Context context){
+		mDatabase = getDbHelper(context).getWritableDatabase();
 	}
 	
 	public SQLiteDatabase getDatabase(){
 		return mDatabase;
+	}
+	
+	private void checkTransactionLocked(){
+		if(mTransactionLocked){
+			throw new IllegalStateException("transaction is locked by others");
+		}
 	}
 	
 	// The Content sub class must have a no-arg constructor
@@ -211,10 +199,12 @@ public class SqliteUtils {
 			return null;
 		}
 		
+		checkTransactionLocked();
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		List<Long> ids = new ArrayList<Long>();
 		try{
 			mDatabase.beginTransaction();
+			mTransactionLocked = true;
 			for(T bean : beans){
 				long id = mDatabase.insert(tableName, null, bean.toContentValues());
 				ids.add(id);
@@ -224,6 +214,7 @@ public class SqliteUtils {
 			return ids.toArray(idArray);
 		}finally{
 			mDatabase.endTransaction();
+			mTransactionLocked = false;
 		}
 	}
 	
@@ -263,10 +254,14 @@ public class SqliteUtils {
 	 * @return updated records' count
 	 */
 	public <T extends EntityBean> int batchUpdateWithId(Class<T> klass, Map<Long, ContentValues> beans){
+		checkTransactionLocked();
+		
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
 			mDatabase.beginTransaction();
+			mTransactionLocked = true;
+			
 			for(long id : beans.keySet()){
 				int c = mDatabase.update(
 						tableName,
@@ -279,6 +274,7 @@ public class SqliteUtils {
 			return count;
 		}finally{
 			mDatabase.endTransaction();
+			mTransactionLocked = false;
 		}
 	}
 	
@@ -289,10 +285,13 @@ public class SqliteUtils {
 	 * @return updated records' count
 	 */
 	public <T extends EntityBean> int batchUpdateWithSelections(Class<T> klass, List<BatchSelection> selections){
+		checkTransactionLocked();
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
 			mDatabase.beginTransaction();
+			mTransactionLocked = true;
+			
 			for(BatchSelection selection : selections){
 				int c = mDatabase.update(
 						tableName,
@@ -305,6 +304,7 @@ public class SqliteUtils {
 			return count;
 		}finally{
 			mDatabase.endTransaction();
+			mTransactionLocked = false;
 		}
 	}
 	
@@ -341,10 +341,13 @@ public class SqliteUtils {
 			return 0;
 		}
 		
+		checkTransactionLocked();
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
 			mDatabase.beginTransaction();
+			mTransactionLocked = true;
+			
 			for(long id : ids){
 				int c = mDatabase.delete(
 						tableName, 
@@ -356,6 +359,7 @@ public class SqliteUtils {
 			return count;
 		}finally{
 			mDatabase.endTransaction();
+			mTransactionLocked = false;
 		}
 	}
 	
@@ -364,9 +368,13 @@ public class SqliteUtils {
 			return 0;
 		}
 		
+		checkTransactionLocked();
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
+			mDatabase.beginTransaction();
+			mTransactionLocked = true;
+			
 			for(BatchSelection selection : selections){
 				int c = mDatabase.delete(
 						tableName, 
@@ -378,6 +386,7 @@ public class SqliteUtils {
 			return count;
 		}finally{
 			mDatabase.endTransaction();
+			mTransactionLocked = false;
 		}
 	}
 	

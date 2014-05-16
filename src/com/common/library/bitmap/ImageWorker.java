@@ -47,7 +47,7 @@ public abstract class ImageWorker {
     private ImageCache.ImageCacheParams mImageCacheParams;
     private Bitmap mLoadingBitmap;
     private boolean mFadeInBitmap = true;
-    private boolean mExitTasksEarly = false;
+    private boolean mTaskWorkPaused = false;
     protected boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
 
@@ -59,12 +59,12 @@ public abstract class ImageWorker {
     private static final int MESSAGE_CLOSE = 3;
     
     public void onActivityResume(){
-    	setExitTasksEarly(false);
+    	setTaskWorkPaused(false);
     }
     
     public void onActivityPause(){
     	setPauseWork(false);
-		setExitTasksEarly(true);
+		setTaskWorkPaused(true);
 		flushCache();
     }
     
@@ -105,8 +105,7 @@ public abstract class ImageWorker {
         } else if (cancelPotentialWork(data, imageView)) {
             //BEGIN_INCLUDE(execute_background_task)
             final BitmapWorkerTask task = new BitmapWorkerTask(data, imageView);
-            final AsyncDrawable asyncDrawable =
-                    new AsyncDrawable(mResources, mLoadingBitmap, task);
+            final AsyncDrawable asyncDrawable = new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
 
             // NOTE: This uses a custom version of AsyncTask that has been pulled from the
@@ -178,9 +177,9 @@ public abstract class ImageWorker {
         mFadeInBitmap = fadeIn;
     }
 
-    public void setExitTasksEarly(boolean exitTasksEarly) {
-        mExitTasksEarly = exitTasksEarly;
-        setPauseWork(false);
+    public void setTaskWorkPaused(boolean taskWorkPaused) {
+        mTaskWorkPaused = taskWorkPaused;
+        setPauseWork(taskWorkPaused);
     }
 
     /**
@@ -298,7 +297,7 @@ public abstract class ImageWorker {
             // to this task and our "exit early" flag is not set then try and fetch the bitmap from
             // the cache
             if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
-                    && !mExitTasksEarly) {
+                    && !mTaskWorkPaused) {
                 bitmap = mImageCache.getBitmapFromDiskCache(dataString);
             }
 
@@ -307,7 +306,7 @@ public abstract class ImageWorker {
             // bound back to this task and our "exit early" flag is not set, then call the main
             // process method (as implemented by a subclass)
             if (bitmap == null && !isCancelled() && getAttachedImageView() != null
-                    && !mExitTasksEarly) {
+                    && !mTaskWorkPaused) {
                 bitmap = processBitmap(mData);
             }
 
@@ -345,7 +344,7 @@ public abstract class ImageWorker {
         protected void onPostExecute(BitmapDrawable value) {
             //BEGIN_INCLUDE(complete_background_work)
             // if cancel was called on this task or the "exit early" flag is set then we're done
-            if (isCancelled() || mExitTasksEarly) {
+            if (isCancelled() || mTaskWorkPaused) {
                 value = null;
             }
 

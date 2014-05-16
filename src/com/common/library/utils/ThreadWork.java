@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.common.library.thread;
+package com.common.library.utils;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
@@ -30,6 +31,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -69,13 +71,16 @@ public abstract class ThreadWork<Params, Progress, Result> {
      * This serialization is global to a particular process.
      */
     
-    public static final Executor SERIAL_EXECUTOR = new SerialExecutor();
+    public static final Executor SERIAL_EXECUTOR = DeviceUtils.hasHoneycomb() ? new SerialExecutor() :
+        Executors.newSingleThreadExecutor(sThreadFactory);
+    
     /**
      * An {@link Executor} that can be used to execute tasks in parallel.
      */
     public static final Executor PARALLEL_EXECUTOR  = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
                     TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
     
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD) 
     private static class SerialExecutor implements Executor {
         final ArrayDeque<Runnable> mTasks = new ArrayDeque<Runnable>();
         Runnable mActive;
@@ -110,7 +115,6 @@ public abstract class ThreadWork<Params, Progress, Result> {
      */
     public static class Tracker {
         private final LinkedList<ThreadWork<?, ?, ?>> mTasks = new LinkedList<ThreadWork<?, ?, ?>>();
-
 
         private void add(ThreadWork<?, ?, ?> task) {
             synchronized (mTasks) {

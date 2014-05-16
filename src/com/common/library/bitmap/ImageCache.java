@@ -103,8 +103,7 @@ public class ImageCache {
      * @param cacheParams The cache parameters to use if the ImageCache needs instantiation.
      * @return An existing retained ImageCache object or a new one if one did not exist
      */
-    public static ImageCache getInstance(
-            FragmentManager fragmentManager, ImageCacheParams cacheParams) {
+    public static ImageCache getInstance(FragmentManager fragmentManager, ImageCacheParams cacheParams) {
 
         // Search for, or create an instance of the non-UI RetainFragment
         final RetainFragment mRetainFragment = findOrCreateRetainFragment(fragmentManager);
@@ -146,8 +145,7 @@ public class ImageCache {
             // the size would need to be precise, from KitKat onward the size would just need to
             // be the upper bound (due to changes in how inBitmap can re-use bitmaps).
             if (DeviceUtils.hasHoneycomb()) {
-                mReusableBitmaps =
-                        Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
+                mReusableBitmaps =  Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
             }
 
             mMemoryCache = new LruCache<String, BitmapDrawable>(mCacheParams.memCacheSize) {
@@ -164,7 +162,6 @@ public class ImageCache {
                         ((RecyclingBitmapDrawable) oldValue).setIsCached(false);
                     } else {
                         // The removed entry is a standard BitmapDrawable
-
                         if (DeviceUtils.hasHoneycomb()) {
                             // We're running on Honeycomb or later, so add the bitmap
                             // to a SoftReference set for possible use with inBitmap later
@@ -211,8 +208,7 @@ public class ImageCache {
                     }
                     if (getUsableSpace(diskCacheDir) > mCacheParams.diskCacheSize) {
                         try {
-                            mDiskLruCache = DiskLruCache.open(
-                                    diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
+                            mDiskLruCache = DiskLruCache.open(diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
                             if (BuildConfig.DEBUG) {
                                 Log.d(TAG, "Disk cache initialized");
                             }
@@ -260,8 +256,7 @@ public class ImageCache {
                         final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
                         if (editor != null) {
                             out = editor.newOutputStream(DISK_CACHE_INDEX);
-                            value.getBitmap().compress(
-                                    mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                            value.getBitmap().compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
                             editor.commit();
                             out.close();
                         }
