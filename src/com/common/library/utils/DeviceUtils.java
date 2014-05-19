@@ -17,6 +17,40 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 public class DeviceUtils {
+	public static boolean hasFroyo() {
+        // Can use static final constants like FROYO, declared in later versions
+        // of the OS since they are inlined at compile time. This is guaranteed behavior.
+        return Build.VERSION.SDK_INT >= VERSION_CODES.FROYO;
+    }
+
+    public static boolean hasGingerbread() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD;
+    }
+
+    public static boolean hasHoneycomb() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB;
+    }
+
+    public static boolean hasHoneycombMR1() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB_MR1;
+    }
+
+    public static boolean hasIceCreamSandwich(){
+    	return Build.VERSION.SDK_INT >= VERSION_CODES.ICE_CREAM_SANDWICH;
+    }
+    
+    public static boolean hasIceCreamSandwichMR1(){
+    	return Build.VERSION.SDK_INT >= VERSION_CODES.ICE_CREAM_SANDWICH_MR1;
+    }
+    
+    public static boolean hasJellyBean() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN;
+    }
+
+    public static boolean hasKitKat() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
+    }
+    
 	public static String getDeviceId(Context context) {
 		TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 		return telephonyManager.getDeviceId();
@@ -100,32 +134,6 @@ public class DeviceUtils {
         }
     }
 
-    public static boolean hasFroyo() {
-        // Can use static final constants like FROYO, declared in later versions
-        // of the OS since they are inlined at compile time. This is guaranteed behavior.
-        return Build.VERSION.SDK_INT >= VERSION_CODES.FROYO;
-    }
-
-    public static boolean hasGingerbread() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD;
-    }
-
-    public static boolean hasHoneycomb() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB;
-    }
-
-    public static boolean hasHoneycombMR1() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB_MR1;
-    }
-
-    public static boolean hasJellyBean() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN;
-    }
-
-    public static boolean hasKitKat() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
-    }
-    
     public static boolean haveHighQulityForVideo() {
 		if (Build.DEVICE.toLowerCase().equals("mione_plus")) {
 			return false;
