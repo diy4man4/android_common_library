@@ -3,6 +3,7 @@ package com.common.library.utils;
 import java.util.List;
 
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
@@ -39,10 +40,8 @@ public class UiUtils {
 	/**
 	 * A thread safe way to show a Toast. Can be called from any thread.
 	 * 
-	 * @param context
-	 *            context
-	 * @param resId
-	 *            Resource ID of the message string.
+	 * @param context application  context
+	 * @param resId Resource ID of the message string.
 	 */
 	public static void showToast(Context context, int resId) {
 		showToast(context, context.getResources().getString(resId));
@@ -52,7 +51,7 @@ public class UiUtils {
 	 * A thread safe way to show a Toast. Can be called from any thread.
 	 * 
 	 * @param context
-	 *            context
+	 *         application   context
 	 * @param message
 	 *            Message to show.
 	 */
@@ -192,11 +191,11 @@ public class UiUtils {
 	}
 	
 	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH) 
-	public static void setSystemBarCanDim(Activity activity, boolean canDim){
+	public static void dimSystemBarCan(Activity activity, boolean dim){
 		if(DeviceUtils.hasIceCreamSandwich()){
 			View decorView = activity.getWindow().getDecorView();
 			int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE;
-			if(canDim){
+			if(dim){
 				decorView.setSystemUiVisibility(uiOptions);
 			}else{
 				// Calling setSystemUiVisibility() with a value of 0 to clears all flags.
@@ -206,23 +205,125 @@ public class UiUtils {
 	}
 	
 	/**
-	 * Hidden system status bar, you can also do by set style in Manifest for activity like below:<br>
-	 * If you hide the system bars in your activity's onCreate() method and the user presses Home, 
+	 * Hidden system status bar, you can also do by set style in Manifest for activity like below:
+	 * 
+	 * <p>If you hide the system bars in your activity's onCreate() method and the user presses Home, 
 	 * the system bars will reappear. When the user reopens the activity, onCreate() won't get called, 
 	 * so the system bars will remain visible. If you want system UI changes to persist as the user
 	 * navigates in and out of your activity, set UI flags in onResume() or onWindowFocusChanged().
+	 * 
 	 * <pre>
 	 * android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
 	 * </pre>
 	 * @param activity
+	 * @param hide 
 	 */
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN) 
-	public static void hiddenStatusBar(Activity activity){
+	public static void hideStatusBar(Activity activity, boolean hide){
 		 if (DeviceUtils.hasJellyBean()) {
-			activity.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN );
+			View decorView = activity.getWindow().getDecorView();
+			ActionBar actionBar = activity.getActionBar();
+			if(hide){
+				// Hide the status bar and action bar
+				int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+				decorView.setSystemUiVisibility(uiOptions);
+				actionBar.hide();
+			}else{
+				// Show the status bar and action bar
+				decorView.setSystemUiVisibility(0);
+				actionBar.show();
+			}
 	    }else{
-	    	 activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-	                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    	if(hide){
+	    		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+	    				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    	}else{
+	    		activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+	    				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    		activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN &
+	    				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	    	}
 	    }
+	}
+	
+	/**
+	 * Hide both the navigation bar and the status bar.
+	 * 
+	 * <p>SYSTEM_UI_FLAG_FULLSCREEN is only available on Android 4.1 and higher, but as
+	 * a general rule, you should design your app to hide the status bar whenever you
+	 *  hide the navigation bar.
+	 *  
+	 *  <p>Note: If you hide the system bars in your activity's onCreate() method and the 
+	 *  user presses Home, the system bars will reappear. When the user reopens the activity,
+	 *  onCreate() won't get called, so the system bars will remain visible. If you want system 
+	 *  UI changes to persist as the user navigates in and out of your activity, set UI flags in
+	 *  onResume() or onWindowFocusChanged().
+	 *  
+	 * @param activity Activity instance
+	 * @param keepLayoutStable if true, when layout content will appear behind the navigation bar.
+	 */
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public static void hideNavigationBar(Activity activity, boolean hide, boolean keepLayoutStable){
+		if(DeviceUtils.hasJellyBean()){
+			if(hide){
+				if(keepLayoutStable){
+					activity.getWindow().getDecorView().setSystemUiVisibility(
+							View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN 
+							| View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+				}else{
+					activity.getWindow().getDecorView().setSystemUiVisibility(
+							View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN);
+				}
+			}else{
+				activity.getWindow().getDecorView().setSystemUiVisibility(0);
+			}
+		}
+	}
+	
+	/**
+	 *  Hide both the navigation bar and the status bar but layout content can resize when switch state, 
+	 *  about detail please refer  {@link #hideNavigationBar(Activity, boolean, boolean)}
+	 * @param activity activity instance
+	 * @param hide whether hide navigation bar 
+	 */
+	public static void hideNavigationBar(Activity activity, boolean hide){
+		hideNavigationBar(activity, hide, false);
+	}
+	
+	/**
+	 * 	Set the IMMERSIVE flag.<br>
+	 * Set the content to appear under the system bars so that the content doesn't resize when the system bars hide and show.
+	 * 
+	 * @param activity
+	 * @param stickMode if true navigation bar disappear after user interaction.
+	 */
+	@TargetApi(Build.VERSION_CODES.KITKAT)
+	private void setImmersiveMode(Activity activity, boolean immersive, boolean stickMode) {
+		if(immersive){
+			if(stickMode){
+				activity.getWindow().getDecorView().setSystemUiVisibility(
+						View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+						| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+						| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar 
+						| View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+						| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+			}else{
+				activity.getWindow().getDecorView().setSystemUiVisibility(
+						View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+						| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+						| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+						| View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+						| View.SYSTEM_UI_FLAG_IMMERSIVE);
+			}
+		}else{
+			activity.getWindow().getDecorView().setSystemUiVisibility(
+		            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+		            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+		            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+		}
 	}
 }
