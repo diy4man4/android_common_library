@@ -16,7 +16,7 @@ import com.common.library.database.TableMapping;
  * A convenient utils class to help do CRUD on sqlite database, every module in project should have a subclass of this class.
  * 
  * <p>
- * You can do like below:
+ * You must create a module DbUtils like below:
  * </p>
  * 
  * <pre>
@@ -46,12 +46,13 @@ import com.common.library.database.TableMapping;
  */
 public abstract class SqliteUtils {
 	protected SQLiteDatabase mDatabase;
-	private volatile boolean mTransactionLocked = false;
+	protected BaseDBHelper mDbHelper;
 	
 	protected abstract BaseDBHelper getDbHelper(Context context);
 	
 	protected SqliteUtils(Context context){
-		mDatabase = getDbHelper(context).getWritableDatabase();
+		mDbHelper = getDbHelper(context);
+		mDatabase = mDbHelper.getWritableDatabase();
 	}
 	
 	public SQLiteDatabase getDatabase(){
@@ -59,7 +60,7 @@ public abstract class SqliteUtils {
 	}
 	
 	private void checkTransactionLocked(){
-		if(mTransactionLocked){
+		if(mDbHelper.isTransactionLocked()){
 			throw new IllegalStateException("transaction is locked by others");
 		}
 	}
@@ -79,6 +80,12 @@ public abstract class SqliteUtils {
 		return null;
 	}
 	
+	/**
+	 * Get all record count of table.
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @return count result
+	 */
 	public <T extends EntityBean> int count(Class<T> klass){
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		Cursor c = mDatabase.query(tableName, EntityBean.COUNT_COLUMNS, null, null, null, null, null);
@@ -96,6 +103,13 @@ public abstract class SqliteUtils {
 		}
 	}
 	
+	/**
+	 * Get record count of table with selections
+	 * @param klass subclass of {@link EntityBean}
+	 * @param selection
+	 * @param selectionArgs
+	 * @return count result
+	 */
 	public <T extends EntityBean> int count(Class<T> klass, String selection, String[] selectionArgs){
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		Cursor c = mDatabase.query(tableName, EntityBean.COUNT_COLUMNS, null, null, null, null, null);
@@ -113,6 +127,12 @@ public abstract class SqliteUtils {
 		}
 	}
 	
+	/**
+	 * Query and return subclass of {@link EntityBean} instance by table primary key id's value.
+	 * @param klass subclass of {@link EntityBean}
+	 * @param id primary key id's value
+	 * @return subclass of {@link EntityBean}'s instance
+	 */
 	public <T extends EntityBean> T findById(Class<T> klass, long id){
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		Cursor c = mDatabase.query(
@@ -133,6 +153,17 @@ public abstract class SqliteUtils {
 		}
 	}
 	
+	/**
+	 * Query and return subclass of {@link EntityBean} instances as a list with size limit for pagination
+	 * @param klass subclass of {@link EntityBean}
+	 * @param selection
+	 * @param selectionArgs
+	 * @param groupBy
+	 * @param having
+	 * @param orderBy
+	 * @param limit
+	 * @return subclass of {@link EntityBean}'s instances list
+	 */
 	public <T extends EntityBean> List<T> findWithLimit(Class<T> klass, String selection,
 			String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
@@ -151,11 +182,31 @@ public abstract class SqliteUtils {
 		return entities;
 	}
 	
+	/**
+	 * Query and return subclass of {@link EntityBean} instance with selections
+	 * @param klass subclass of {@link EntityBean}
+	 * @param selection
+	 * @param selectionArgs
+	 * @param groupBy
+	 * @param having
+	 * @param orderBy
+	 * @return subclass of {@link EntityBean}'s instances list
+	 */
 	public <T extends EntityBean> List<T> find(Class<T> klass, String selection,
 			String[] selectionArgs, String groupBy, String having, String orderBy) {
 		return findWithLimit(klass, selection, selectionArgs, groupBy, having, orderBy, null);
 	}
 	
+	/**
+	 * Query and return the first record of subclass of {@link EntityBean} instance with selections.
+	 * @param klass subclass of {@link EntityBean}
+	 * @param selection
+	 * @param selectionArgs
+	 * @param groupBy
+	 * @param having
+	 * @param orderBy
+	 * @return subclass of {@link EntityBean}'s instance
+	 */
 	public <T extends EntityBean> T findFirst(Class<T> klass, String selection,
 			String[] selectionArgs, String groupBy, String having, String orderBy) {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
@@ -185,6 +236,9 @@ public abstract class SqliteUtils {
 	
 	/**
 	 * Insert table with module's properties.
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @param beansubclass of {@link EntityBean}'s instance
 	 */
 	public <T extends EntityBean> long save(Class<T> klass, T bean) {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
@@ -193,6 +247,8 @@ public abstract class SqliteUtils {
 
 	/**
 	 * Save more than one records in batch mode.
+	 * @param klass subclass of {@link EntityBean}
+	 * @param beans subclass of {@link EntityBean}'s instance list
 	 */
 	public <T extends EntityBean> Long[] batchSave(Class<T> klass, List<T> beans){
 		if(beans == null || beans.size() == 0){
@@ -203,23 +259,25 @@ public abstract class SqliteUtils {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		List<Long> ids = new ArrayList<Long>();
 		try{
-			mDatabase.beginTransaction();
-			mTransactionLocked = true;
+			beginTransaction();
 			for(T bean : beans){
 				long id = mDatabase.insert(tableName, null, bean.toContentValues());
 				ids.add(id);
 			}
-			mDatabase.setTransactionSuccessful();
+			setTransactionSuccessful();
 			Long[] idArray = new Long[ids.size()];
 			return ids.toArray(idArray);
 		}finally{
-			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			endTransaction();
 		}
 	}
 	
 	/**
 	 * Update recored with content values.
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @param id the primary key id's value of table you want to update.
+	 * @param values table columns to be updated were defined here.
 	 */
 	public <T extends EntityBean> int update(Class<T> klass, long id, ContentValues values) {
 		if (id == EntityBean.NOT_SAVED) {
@@ -235,7 +293,13 @@ public abstract class SqliteUtils {
 	}
 	
 	/**
-	 * Update records with selection.
+	 * Update records with selection and values.
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @param where
+	 * @param selectionArgs
+	 * @param values
+	 * @return updated records' count
 	 */
 	public <T extends EntityBean>int update(Class<T> klass, String where,
 			String[] selectionArgs, ContentValues values){
@@ -248,9 +312,25 @@ public abstract class SqliteUtils {
 	}
 	
 	/**
-	 * Update records in batch mode and update records with explicit primary key.
-	 * @param klass
-	 * @param beans
+	 * Update records in batch mode and update records with primary key's value.
+	 * 
+	 * <pre>
+	 * Map<Long, ContentValues> beans = new HashMap<Long, ContentValues>();
+	 * ContentValues values = new ContentValues();
+	 * values.put(Record.Columns.USERNAME, "zhangsan");
+	 * values.put(Record.Columns.PASSWORD, "123456");
+	 * beans.put(101l, values);
+	 * 
+	 * values = new ContentValues();
+	 * values.put(Record.Columns.USERNAME, "lisi");
+	 * values.put(Record.Columns.PASSWORD, "654321");
+	 * beans.put(102l, values);
+	 * 
+	 * DefaultDbUtils.get(context).batchUpdateWithId(Record.class, beans);
+	 * </pre>
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @param beans update records definitions
 	 * @return updated records' count
 	 */
 	public <T extends EntityBean> int batchUpdateWithId(Class<T> klass, Map<Long, ContentValues> beans){
@@ -259,9 +339,7 @@ public abstract class SqliteUtils {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
-			mDatabase.beginTransaction();
-			mTransactionLocked = true;
-			
+			beginTransaction();
 			for(long id : beans.keySet()){
 				int c = mDatabase.update(
 						tableName,
@@ -270,17 +348,33 @@ public abstract class SqliteUtils {
 						new String[]{String.valueOf(id)});
 				count += c;
 			}
-			mDatabase.setTransactionSuccessful();
+			setTransactionSuccessful();
 			return count;
 		}finally{
-			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			endTransaction();
 		}
 	}
 	
 	/**
 	 * Update records in batch mode and update records with selection clause.
-	 * @param klass
+	 * 
+	 * <pre>
+	 * List<BatchSelection> selections = new ArrayList<BatchSelection>();
+	 * 
+	 * ContentValues values = new ContentValues();
+	 * values.put(Record.Columns.USERNAME, "zhangsan");
+	 * values.put(Record.Columns.SCORE, 100);
+	 * BatchSelection selection = new BatchSelection(values, Record.Columns.SEX + "=?", new String[]{"femal"});
+	 * selections.add(selection);
+	 * 
+	 * values = new ContentValues();
+	 * values.put(Record.Columns.SCORE, 100);
+	 * selection = new BatchSelection(values, Record.Columns.SEX + "=?", new String[]{"male"});
+	 * selections.add(selection);
+	 * 
+	 * DefaultDbUtils.getDbUtils(context).batchUpdateWithSelections(Record.class, selections);
+	 * </>
+	 * @param klass subclass of {@link EntityBean}
 	 * @param selections
 	 * @return updated records' count
 	 */
@@ -289,9 +383,7 @@ public abstract class SqliteUtils {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
-			mDatabase.beginTransaction();
-			mTransactionLocked = true;
-			
+			beginTransaction();
 			for(BatchSelection selection : selections){
 				int c = mDatabase.update(
 						tableName,
@@ -300,16 +392,19 @@ public abstract class SqliteUtils {
 						selection.getWhereArgs());
 				count += c;
 			}
-			mDatabase.setTransactionSuccessful();
+			setTransactionSuccessful();
 			return count;
 		}finally{
-			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			endTransaction();
 		}
 	}
 	
 	/**
-	 * Delete record with id in this subclass.
+	 * Delete record with its primary key id.
+	 * 
+	 * @param klass subclass of {@link EntityBean}
+	 * @param id value of primary key id
+	 * @return deleted record count
 	 */
 	public <T extends EntityBean> int delete(Class<T>klass,  long id) {
 		if(id == EntityBean.NOT_SAVED){
@@ -324,6 +419,11 @@ public abstract class SqliteUtils {
 	
 	/**
 	 * Delete records with selections.
+	 * 
+	 *  @param klass subclass of {@link EntityBean}
+	 *  @param selection
+	 *  @param selectionArgs
+	 *  @return deleted records' count
 	 */
 	public <T extends EntityBean> int delete(Class<T> klass, String selection, String[] selectionArgs){
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
@@ -335,6 +435,21 @@ public abstract class SqliteUtils {
 	
 	/**
 	 * Delete records in batch mode.
+	 * 
+	 * <pre>
+	 * List&lt;Long&gt; ids = new ArrayList&lt;Long&gt;();
+	 * ids.add(111l);
+	 * ids.add(112l);
+	 * ids.add(113l);
+	 * 
+	 * DefaultDbUtils.getDbUtils(context).batchDeleteWithId(Record.class, ids);
+	 * </pre>
+	 * 
+	 * @param klass
+	 *            subclass of {@link EntityBean}
+	 * @param ids
+	 *            primary key's values of records to be deleted.
+	 * @return deleted record count
 	 */
 	public <T extends EntityBean> int batchDeleteWithId(Class<T> klass, List<Long> ids){
 		if(ids != null && ids.size() == 0){
@@ -345,9 +460,7 @@ public abstract class SqliteUtils {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
-			mDatabase.beginTransaction();
-			mTransactionLocked = true;
-			
+			beginTransaction();
 			for(long id : ids){
 				int c = mDatabase.delete(
 						tableName, 
@@ -355,14 +468,32 @@ public abstract class SqliteUtils {
 						new String[]{String.valueOf(id)});
 				count += c;
 			}
-			mDatabase.setTransactionSuccessful();
+			setTransactionSuccessful();
 			return count;
 		}finally{
-			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			endTransaction();
 		}
 	}
 	
+	/**
+	 * Delete records with selections
+	 * 
+	 * <pre>
+	 * List&lt;BatchSelection&gt; selections = new ArrayList&lt;BatchSelection&gt;();
+	 * BatchSelection selection = new BatchSelection(Record.Columns.USERNAME + &quot;=?&quot;, new String[] { &quot;xiaoli&quot; });
+	 * selections.add(selection);
+	 * 
+	 * selection = new BatchSelection(Record.Columns.HEIGHT + &quot;&gt;?&quot;, new String[] { &quot;190&quot; });
+	 * selections.add(selection);
+	 * 
+	 * DefaultDbUtils.getDbUtils(context).batchDeleteWithSelections(Record.class, selections);
+	 * </pre>
+	 * 
+	 * @param klass
+	 *            subclass of {@link EntityBean}
+	 * @param selections
+	 * @return deleted records count
+	 */
 	public <T extends EntityBean> int batchDeleteWithSelections(Class<T> klass, List<BatchSelection> selections){
 		if(selections == null || selections.size() == 0){
 			return 0;
@@ -372,9 +503,7 @@ public abstract class SqliteUtils {
 		String tableName = TableMapping.getTableMapping().getTableName(klass);
 		int count = 0;
 		try{
-			mDatabase.beginTransaction();
-			mTransactionLocked = true;
-			
+			beginTransaction();
 			for(BatchSelection selection : selections){
 				int c = mDatabase.delete(
 						tableName, 
@@ -382,24 +511,24 @@ public abstract class SqliteUtils {
 						selection.getWhereArgs());
 				count += c;
 			}
-			mDatabase.setTransactionSuccessful();
+			setTransactionSuccessful();
 			return count;
 		}finally{
-			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			endTransaction();
 		}
 	}
 	
 	public void beginTransaction() {
-		if(mTransactionLocked){
+		if(mDbHelper.isTransactionLocked()){
 			throw new IllegalStateException("Transaction was started and locked currently.");
 		}else{
 			mDatabase.beginTransaction();
+			mDbHelper.lockTransaction();
 		}
 	}
 
 	public void setTransactionSuccessful() {
-		if(mTransactionLocked){
+		if(mDbHelper.isTransactionLocked()){
 			mDatabase.setTransactionSuccessful();
 		}else{
 			throw new IllegalStateException("Currently no transaction was started.");
@@ -407,9 +536,9 @@ public abstract class SqliteUtils {
 	}
 
 	public void endTransaction() {
-		if(mTransactionLocked){
+		if(mDbHelper.isTransactionLocked()){
 			mDatabase.endTransaction();
-			mTransactionLocked = false;
+			mDbHelper.unlockTransaction();
 		}else{
 			throw new IllegalStateException("Currently no transaction was started.");
 		}
