@@ -15,23 +15,19 @@ import com.common.library.database.TableMapping;
 /**
  * A convenient utils class to help do CRUD on sqlite database, every module in project should have a subclass of this class.
  * 
- * <p>
- * You must create a module DbUtils like below:
- * </p>
- * 
  * <pre>
  * public class ReportDbUtils extends SqliteUtils {
- * 	public static final String DATABASE_NAME = &quot;breakdown_report.db&quot;;
- * 	public static final int DATABASE_VERSION = 1;
  * 	private static ReportDbUtils singleton;
  * 
- * 	private synchronized static void initDbUtils() {
- * 		singleton = new ReportDbUtils();
+ * 	protected ReportDbUtils(Context context) {
+ * 		super(context);
  * 	}
  * 
- * 	public synchronized static SqliteUtils getDbUtils(Context context) {
- * 		if (singleton == null) {
- * 			initDbUtils();
+ * 	public static SqliteUtils getDbUtils(Context context) {
+ * 		synchronized (LOCK_OBJ) {
+ * 			if (singleton == null) {
+ * 				singleton = new ReportDbUtils(context);
+ * 			}
  * 		}
  * 		return singleton;
  * 	}
@@ -45,6 +41,7 @@ import com.common.library.database.TableMapping;
  * </pre>
  */
 public abstract class SqliteUtils {
+	protected static Object LOCK_OBJ = new Object();
 	protected SQLiteDatabase mDatabase;
 	protected BaseDBHelper mDbHelper;
 	

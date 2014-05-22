@@ -6,37 +6,35 @@ import java.util.concurrent.ConcurrentHashMap;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.common.library.preferences.PrefsUnity;
-
 /**
  * Preferences in every model should extends BasePrefs, you can do like below:<br>
+ * 
  * <pre>
- * public class DefaultPrefs extends BasePrefs{
- *	private static DefaultPrefs singleton;
- *
- *	protected DefaultPrefs(Context context) {
- *		super(context);
- *	}
- *
- *	@Override
- *	protected String getModuleName() {
- *		return "default_prefs";
- *	}
- *	
- *	private static synchronized void initPrefs(Context context){
- *		singleton = new DefaultPrefs(context);
- *	}
- *	
- *	public  synchronized  static DefaultPrefs getPrefs(Context context){
- *		if(singleton == null){
- *			initPrefs(context);
- *		}
- *		return singleton;
- *	}
- *}
-* </pre>
-*/
+ * public class ReportPrefs extends BasePrefs {
+ * 	private static ReportPrefs singleton;
+ * 
+ * 	protected ReportPrefs(Context context) {
+ * 		super(context);
+ * 	}
+ * 
+ * 	public static BasePrefs getPrefs(Context context) {
+ * 		synchronized (LOCK_OBJ) {
+ * 			if (singleton == null) {
+ * 				singleton = new ReportPrefs(context);
+ * 			}
+ * 		}
+ * 		return singleton;
+ * 	}
+ * 
+ * 	&#064;Override
+ * 	protected String getModuleName() {
+ * 		return &quot;report&quot;;
+ * 	}
+ * }
+ * </pre>
+ */
 public abstract class BasePrefs {
+	protected static Object LOCK_OBJ = new Object();
     private static final String KEY_NAMESPACE = "namespace";
 	protected Context mContext;
 
