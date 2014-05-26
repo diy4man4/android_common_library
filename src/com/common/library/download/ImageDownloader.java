@@ -1,5 +1,7 @@
 package com.common.library.download;
 
+import java.io.IOException;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -93,7 +95,7 @@ public class ImageDownloader {
 				@Override
 				protected Bitmap doInBackground(String... params) {
 					String downloadUrl = params[0];
-					return DownloadUtils.downloadBitmap(downloadUrl);
+					return DownloadUtils.downloadBitmap(downloadUrl, null);
 				}
 				
 				@Override
