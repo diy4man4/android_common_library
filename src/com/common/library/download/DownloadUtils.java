@@ -90,13 +90,13 @@ public class DownloadUtils {
 				}
 			} else{
 				if(progressListener != null){
-					progressListener.onError("invalidate http response code:" + responseCode, imageUrl);
+					progressListener.onError("Invalid http response code:" + responseCode, imageUrl);
 				}
 			}
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			if(progressListener != null){
-				progressListener.onError("invalidate url format", imageUrl);
+				progressListener.onError("Invalid url format", imageUrl);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -193,13 +193,13 @@ public class DownloadUtils {
 				}
 			} else{
 				if(progressListener != null){
-					progressListener.onError("invalidate http response code:" + responseCode, fileUrl);
+					progressListener.onError("Invalid http response code:" + responseCode, fileUrl);
 				}
 			}
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			if(progressListener != null){
-				progressListener.onError("Invalidate URL format", fileUrl);
+				progressListener.onError("Invalid URL format", fileUrl);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -237,11 +237,22 @@ public class DownloadUtils {
 	 * @param progressListener  progress update callback {@link OnProgressListener}
 	 * @throws IOException
 	 */
-	public static void downloadFileBreakpointly(String fileURL, File localFile, OnProgressListener progressListener) throws IOException {
+	public static void downloadFileBreakpointly(String fileURL, File localFile, OnProgressListener progressListener) {
 		HttpURLConnection connection = null;
 		ProgressAwareInputStream inputStream = null;
 		RandomAccessFile outputFile = null;
 		
+		if(!localFile.exists()){
+			try {
+				localFile.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				if(progressListener != null){
+					progressListener.onError("Cannot create new file", fileURL);
+				}
+				return;
+			}
+		}
 		long localSize = localFile.length();
 
 		try {
@@ -275,12 +286,30 @@ public class DownloadUtils {
 					progressListener.onError("invalidate http response code:" + responseCode, fileURL);
 				}
 			}
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			if(progressListener != null){
+				progressListener.onError("invalid url:" + fileURL, fileURL);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			if(progressListener != null){
+				progressListener.onError("IOException:" + e.getMessage(), fileURL);
+			}
 		}finally {
 			if(outputFile != null){
-				outputFile.close();
+				try {
+					outputFile.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 			if(inputStream != null){
-				inputStream.close();
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 			if(connection != null){
 				connection.disconnect();
